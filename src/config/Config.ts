@@ -72,5 +72,4 @@ export namespace Config {
     //游戏地址
     export const GAME_URL = "http://127.0.0.1:3000/index.html";
     //export const GAME_URL = "http://127.0.0.1:3001";
-    //export const GAME_URL = "http://fdd501.tpddns.cn:2333/chfs/shared/h5Demo6/";
 }
