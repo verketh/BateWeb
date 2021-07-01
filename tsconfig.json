@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "types": [
+      "node"
+    ],
+    "module": "commonjs",
+    "target": "es2016",
+    "lib": [
+      "es2015",
+      "es2016",
+      "esnext.asynciterable"
+    ],
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "inlineSourceMap": true,
+    "rootDirs": [
+      "."
+    ],
+    "outDir": "./dist",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "moduleResolution": "node",
+    "watch": true
+  },
+  "include": [
+    "./src/**/*.ts"
+  ],
+  "exclude": [
+    "./dist/**/*.*"
+  ]
+}

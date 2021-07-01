@@ -1,0 +1,9 @@
+{
+    "inline-bookmarks.view.showVisibleFilesOnly": false,
+    "inline-bookmarks.expert.custom.words.mapping": {
+        "green": [
+            "@CODEMARK[ \\t\\n]"
+        ],
+    },
+    "editor.formatOnSave": true
+}

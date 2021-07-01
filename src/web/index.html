@@ -1,0 +1,172 @@
+<html>
+
+<head>
+    <title>监控控制面板</title>
+    <script src="js/chart.js"></script>
+</head>
+
+<body>
+    <div style="margin: auto;width: 70%;">
+        <div style="height: 40px;width: 25%;float: left;">
+            <h5 id="h_tween" style="color: rgba(200, 0, 200, 0.5);"></h5>
+        </div>
+        <div style="height: 30px;width: 25%;float: left;text-align:center;">
+            <h5 id="h_memory" style="color: rgba(255, 0, 0, 0.5);"></h5>
+        </div>
+        <div style="height: 30px;width: 25%;float: left;text-align:center;">
+            <h5 id="h_gpu" style="color: rgba(0, 199, 132, 0.5);"></h5>
+        </div>
+        <div style="height: 30px;width: 25%;float: left;text-align:center;">
+            <h5 id="h_caches" style="color: rgba(0, 0, 132, 0.5);"></h5>
+        </div>
+    </div>
+
+    <canvas id="perChart" style="margin: auto;width: 70%;height: 30%;"></canvas>
+    <canvas id="netLastChart" style="margin: auto;width: 70%;height: 30%;"></canvas>
+    <canvas id="netTopChart" style="margin: auto;width: 70%;height: 40%;"></canvas>
+
+    <script>
+        var perData = {
+            labels: [],
+            datasets: [
+                {
+                    label: '缓动数量',
+                    data: [],
+                    backgroundColor: 'rgba(200, 0, 200, 0.5)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    borderWidth: 1
+                },
+                {
+                    label: '内存(MB)',
+                    data: [],
+                    backgroundColor: 'rgba(255, 0, 0, 0.5)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'GPU(MB)',
+                    data: [],
+                    backgroundColor: 'rgba(0, 199, 132, 0.5)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    borderWidth: 1
+                },
+                {
+                    label: '缓存资源数',
+                    data: [],
+                    backgroundColor: 'rgba(0, 0, 132, 0.5)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    borderWidth: 1
+                }
+            ]
+        };
+        var netTopData = {
+            labels: [],
+            datasets: [{
+                label: '加载最耗时的资源(MS)',
+                data: [],
+                backgroundColor: 'rgba(255, 0, 0, 0.5)',
+                borderColor: 'rgb(255, 99, 132)',
+                borderWidth: 1
+            }
+            ]
+        };
+        var netLastData = {
+            labels: [],
+            datasets: [{
+                label: '资源加载耗时(MS)',
+                data: [],
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }
+            ]
+        };
+        const perConfig = {
+            type: 'bar',
+            data: perData,
+            options: []
+        };
+        const netTopConfig = {
+            type: 'bar',
+            data: netTopData,
+            options: {
+                indexAxis: 'y',
+            }
+        };
+        const netLastConfig = {
+            type: 'line',
+            data: netLastData,
+            options: []
+        };
+        var perCtx = document.getElementById("perChart").getContext("2d");
+        var perChart = new Chart(perCtx, perConfig);
+
+        var netTopCtx = document.getElementById("netTopChart").getContext("2d");
+        var netTopChart = new Chart(netTopCtx, netTopConfig);
+
+        var netLastCtx = document.getElementById("netLastChart").getContext("2d");
+        var netLastChart = new Chart(netLastCtx, netLastConfig);
+
+        let func = () => {
+            var request = new XMLHttpRequest();
+            request.open('GET', "/data");
+            request.setRequestHeader("Content-type", "application/json");
+            request.send();
+            request.onload = function (e) {
+                if (request.status === 200) {
+                    //console.log(request.response)
+                    let json = JSON.parse(request.response);
+                    perData.labels = json.performance.labels;
+                    perData.datasets[0].data = json.performance.tween.data;
+                    perData.datasets[1].data = json.performance.memory.data;
+                    perData.datasets[2].data = json.performance.gpu.data;
+                    perData.datasets[3].data = json.performance.caches.data;
+                    perChart.update();
+
+                    //统计
+                    let str = "";
+                    str = "[缓动] 最小:" + json.performance.tween.min + " 最大:" + json.performance.tween.max + " 平均:" + (json.performance.tween.total / json.performance.tween.count).toFixed(2);
+                    document.getElementById('h_tween').innerText = str;
+                    str = "[内存] 最小:" + json.performance.memory.min + " 最大:" + json.performance.memory.max + " 平均:" + (json.performance.memory.total / json.performance.memory.count).toFixed(2);
+                    document.getElementById('h_memory').innerText = str;
+                    str = "[GPU] 最小:" + json.performance.gpu.min + " 最大:" + json.performance.gpu.max + " 平均:" + (json.performance.gpu.total / json.performance.gpu.count).toFixed(2);
+                    document.getElementById('h_gpu').innerText = str;
+                    str = "[缓存] 最小:" + json.performance.caches.min + " 最大:" + json.performance.caches.max + " 平均:" + (json.performance.caches.total / json.performance.caches.count).toFixed(2);
+                    document.getElementById('h_caches').innerText = str;
+
+                    netTopData.labels = [];
+                    netTopData.datasets[0].data = [];
+                    for (let i = 0; i < json.network.top.length; i++) {
+                        const element = json.network.top[i];
+                        netTopData.labels.push(element.url);
+                        netTopData.datasets[0].data.push(element.time);
+                    }
+                    netTopChart.update();
+
+                    netLastData.labels = [];
+                    netLastData.datasets[0].data = [];
+                    for (let i = 0; i < json.network.last.length; i++) {
+                        const element = json.network.last[i];
+                        netLastData.labels.push(element.url);
+                        netLastData.datasets[0].data.push(element.time);
+                    }
+                    netLastChart.update();
+                }
+                else {
+                    console.warn('设置失败，请重试！');
+                    window.history.back(-1);
+                }
+            }
+            request.onerror = function (e) {
+                console.warn('请求失败')
+            }
+        }
+
+        setInterval(() => {
+            func();
+        }, 1000)
+
+    </script>
+</body>
+
+</html>
