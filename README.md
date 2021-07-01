@@ -29,8 +29,11 @@ vscode F5
 目录 ./logs
 
 all.log 所有日志
+
 pageerror.log 游戏错误日志
+
 performance.log 游戏性能日志
+
 requestfailed.log 游戏资源请求失败日志
 
 ### 5.打开监控控制面板
